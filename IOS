@@ -1,0 +1,133 @@
+class PageTwoViewController: UIViewController {
+
+    @IBOutlet weak var mTextField: UITextField!
+    @IBOutlet weak var mImangeView: UIImageView!
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        
+    }
+    @IBAction func onEditingChange()
+    {
+        let text = self.mTextField.text
+        if text != "" && text != nil
+        {
+        var qrCode = QRCode(text!)
+        qrCode?.color = CIColor(rgba:"000000")
+        qrCode?.backgroundColor = CIColor (rgba: "FFFFFF")
+        self.mImangeView.image = qrCode?.image
+        }
+        else {
+            self.mImangeView.image = UIImage(named: "qr_code_generator")
+        }
+    }
+  
+    
+    
+
+}
+class PageTwoViewController: UIViewController {
+    
+    @IBOutlet weak var mTextField: UITextField!
+    @IBOutlet weak var mImageView: UIImageView!
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        
+    }
+    
+    @IBAction func onEditingChange(){
+        let text = self.mTextField.text
+        if text != "" && text != nil{
+            var qrCode = QRCode(text!)
+            qrCode?.color = CIColor(rgba: "000000")
+            qrCode?.backgroundColor = CIColor(rgba: "FFFFFF")
+            self.mImageView.image = qrCode?.image
+        }else{
+            self.mImageView.image = UIImage(named: "qr_code_generator")
+        }
+    }
+}
+import UIKit
+import Alamofire
+import AlamofireImage // ดึง url
+import XCDYouTubeKit
+
+class PageThreeViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+    
+    @IBOutlet weak var mTableView : UITableView!
+    var mDataArray: [Youtube] = []
+    var mBlurView = "DKLiveBlurView?"
+    
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        self.feedData()
+        self.setBlur()
+    }
+    
+    func setBlur()
+    {   // Add header view
+        let headerView = UIView()
+        let ratioOfImage: CGFloat = 1.15 //images width/height 2195/1901= 1.15
+        let height = UIScreen.main.bounds.width / ratioOfImage
+        headerView.frame = CGRect(x: 0, y: 0, width: 1, height: height)
+        self.mTableView.tableHeaderView = headerView
+        
+        
+        
+    }
+    func feedData(){ // use api
+        let params = ["username":"admin","password": "password", "type": "foods"]
+        let url = "http://codemobiles.com/adhoc/youtubes/index_new.php?username=admin&password=password&type=foods"
+        
+        AF.request(url, method: .post, parameters: params).responseJSON { (response)in
+            
+            switch response.result{
+            case .success :
+                do
+                {
+                    let decoder = JSONDecoder() // matching json
+                    let result = try decoder.decode(youtube.self, from: response.data!)
+                    self.mDataArray = result.youtubes
+                    self.mTableView.reloadData()
+                }
+                catch let err
+                {
+                    print(err)
+                    
+                }
+                print(response)
+                break
+            default:
+                break
+            }
+        }
+    }
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return self.mDataArray.count
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = self.mTableView.dequeueReusableCell(withIdentifier: "youtube") as? YoutubeTableViewCell
+        
+        let item = self.mDataArray[indexPath.row]
+        
+        cell?.mTitlelabel.text = item.title
+        cell?.mSubtitlelabel.text = item.subtitle
+        cell?.mAvatarImageView.af_setImage(withURL: item.avatarImage.url())
+        cell?.YoutubeImageView.af_setImage(withURL : item.youtubeImage.url())
+        
+        return cell!
+    }
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath){
+        self.mTableView.deselectRow(at: indexPath, animated: true)
+        
+        let item = self.mDataArray[indexPath.row]
+        let youtubeVC = XCDYouTubeVideoPlayerViewController(videoIdentifier: item.id)
+        present(youtubeVC, animated: true, completion: nil)
+    }
+    
+}
